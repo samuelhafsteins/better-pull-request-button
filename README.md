@@ -64,6 +64,12 @@ With Node.js 22+ and Chromium installed, run `npm run test:browser` for browser 
 
 Load `extension/` in your browser, then reload the extension and GitHub tabs after code changes.
 
+### Firefox source code submission
+
+When Mozilla asks **“Do You Need to Submit Source Code?”**, select **No**. The extension package already contains the original, readable JavaScript, HTML, and CSS. There is no minification, bundling, transpilation, or code generation.
+
+`web-ext build` only packages the files into a ZIP; it does not transform the code. A separate source code archive is therefore not needed.
+
 ## License
 
 [MIT](LICENSE)
