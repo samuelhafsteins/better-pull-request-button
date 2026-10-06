@@ -10,11 +10,12 @@
     const root = host.attachShadow({ mode: "open" });
     const style = document.createElement("style");
     style.textContent = `
-      :host { display: inline-flex; vertical-align: middle; align-self: center; flex-shrink: 0; }
+      :host { display: inline-flex; position: absolute; left: 0; top: 0; width: 12px; height: 28px; }
+      :host([hidden]) { display: none !important; }
       * { box-sizing: border-box; }
       button, input { font: inherit; }
       button { cursor: pointer; }
-      .trigger { display: grid; place-items: center; width: 16px; height: 28px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--fgColor-default, #1f2328); }
+      .trigger { display: grid; place-items: center; width: 12px; height: 28px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--fgColor-default, #1f2328); }
       .trigger:hover, .item:hover, .item:focus-visible { background: var(--bgColor-muted, #f6f8fa); }
       :focus-visible { outline: 2px solid #0969da; outline-offset: -2px; }
       .panel { position: fixed; inset: auto; margin: 0; padding: 6px; width: 310px; max-width: calc(100vw - 16px); overflow: auto; z-index: 2147483647; border: 1px solid var(--borderColor-default, #d1d9e0); border-radius: 8px; box-shadow: 0 8px 24px #0003; background: var(--bgColor-default, #fff); color: var(--fgColor-default, #1f2328); font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-align: start; }
@@ -68,7 +69,35 @@
     let opened = false;
     let editing = false;
     let listeners;
-    let parent;
+    let observedParent;
+    const lifetime = new AbortController();
+
+    // The caret must not contribute to GitHub's tab widths or change the
+    // display/position of its navigation items. Use the link's trailing padding
+    // and position an out-of-flow sibling in the same containing block.
+    function positionTrigger() {
+      const bounds = link.getBoundingClientRect();
+      const computed = getComputedStyle(link);
+      const hidden = !bounds.width || !bounds.height || computed.visibility !== "visible";
+      if (host.hidden !== hidden) host.hidden = hidden;
+      if (hidden) {
+        close();
+        return;
+      }
+      const caretBounds = host.getBoundingClientRect();
+      const padding = Math.min(parseFloat(computed.paddingRight) || 0, 8);
+      const left = (parseFloat(host.style.left) || 0) + bounds.right - padding - caretBounds.left;
+      const top = (parseFloat(host.style.top) || 0) + bounds.top + (bounds.height - 28) / 2 - caretBounds.top;
+      if (Math.abs(left - (parseFloat(host.style.left) || 0)) > 0.01) host.style.left = `${left}px`;
+      if (Math.abs(top - (parseFloat(host.style.top) || 0)) > 0.01) host.style.top = `${top}px`;
+      if (opened) position();
+    }
+
+    const sizeObserver = new ResizeObserver(positionTrigger);
+    sizeObserver.observe(link);
+    const visibilityObserver = new MutationObserver(positionTrigger);
+    visibilityObserver.observe(link, { attributes: true, attributeFilter: ["style", "class", "hidden"] });
+    window.addEventListener("resize", positionTrigger, { signal: lifetime.signal });
 
     function position() {
       const bounds = trigger.getBoundingClientRect();
@@ -231,13 +260,13 @@
     });
 
     function attach() {
-      const nextParent = link.parentElement?.matches("li") ? link.parentElement : null;
-      if (parent !== nextParent) {
-        parent?.removeAttribute("data-bpr-split");
-        parent = nextParent;
-        parent?.setAttribute("data-bpr-split", "");
+      if (observedParent !== link.parentElement) {
+        if (observedParent) sizeObserver.unobserve(observedParent);
+        observedParent = link.parentElement;
+        if (observedParent) sizeObserver.observe(observedParent);
       }
       if (link.nextSibling !== host) link.after(host);
+      positionTrigger();
     }
 
     return {
@@ -252,8 +281,10 @@
       },
       remove() {
         close();
+        lifetime.abort();
+        sizeObserver.disconnect();
+        visibilityObserver.disconnect();
         host.remove();
-        parent?.removeAttribute("data-bpr-split");
       },
     };
   }

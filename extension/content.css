@@ -1,6 +1,0 @@
-/* Keep the arrow beside its link, including inside GitHub's own menus. */
-[data-bpr-split]:not([hidden]) {
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: nowrap;
-}

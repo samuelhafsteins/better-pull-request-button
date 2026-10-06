@@ -60,6 +60,8 @@ npm test
 npm run check
 ```
 
+With Node.js 22+ and Chromium installed, run `npm run test:browser` for browser checks, including a regression check that the arrow leaves GitHub’s tab dimensions unchanged. Set `CHROMIUM` to your browser executable if needed. `LIVE_GITHUB=1 npm run test:browser` also compares the real GitHub navigation with the extension enabled and disabled at multiple window widths.
+
 Load `extension/` in your browser, then reload the extension and GitHub tabs after code changes.
 
 ## License
