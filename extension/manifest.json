@@ -1,0 +1,28 @@
+{
+  "manifest_version": 3,
+  "name": "Better Pull Request Button",
+  "version": "1.0.0",
+  "description": "Apply your saved default filter when opening Pull requests on GitHub.",
+  "permissions": ["storage"],
+  "action": {
+    "default_title": "Configure your pull request filter",
+    "default_popup": "options.html"
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://github.com/*"],
+      "js": ["filter.js", "content.js"],
+      "run_at": "document_start"
+    }
+  ],
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "better-pull-request-button@samuelhafsteins.github.io",
+      "strict_min_version": "109.0"
+    }
+  }
+}

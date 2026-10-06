@@ -1,0 +1,14 @@
+{
+  "name": "better-pull-request-button",
+  "version": "1.0.0",
+  "private": true,
+  "description": "A browser extension for setting a default GitHub pull request filter.",
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check extension/filter.js && node --check extension/content.js && node --check extension/options.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "license": "MIT"
+}

@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Better Pull Request Button</title>
+    <link rel="stylesheet" href="options.css">
+    <script src="filter.js" defer></script>
+    <script src="options.js" defer></script>
+  </head>
+  <body>
+    <main>
+      <header>
+        <span class="eyebrow">YOUR GITHUB, YOUR DEFAULTS</span>
+        <h1>Better Pull Request Button</h1>
+        <p>Go straight to the pull requests you care about.</p>
+      </header>
+
+      <form id="settings-form">
+        <fieldset id="settings" disabled>
+          <label class="toggle">
+            <input id="enabled" type="checkbox">
+            Apply my filter to Pull requests links
+          </label>
+
+          <label for="filter">Default filter</label>
+          <textarea id="filter" rows="3" spellcheck="false" placeholder="is:pr is:open -is:draft" aria-describedby="filter-hint"></textarea>
+          <p id="filter-hint" class="hint">Use GitHub’s usual search syntax. Leave blank to use GitHub’s defaults.</p>
+
+          <details>
+            <summary>Example filters</summary>
+            <ul>
+              <li><strong>Ready for review</strong><code>is:pr is:open -is:draft</code></li>
+              <li><strong>Waiting on me</strong><code>is:pr is:open review-requested:@me</code></li>
+              <li><strong>My pull requests</strong><code>is:pr is:open author:@me</code></li>
+            </ul>
+          </details>
+
+          <button type="submit">Save filter</button>
+        </fieldset>
+        <p id="status" role="status" aria-live="polite">Loading settings…</p>
+      </form>
+
+      <footer>Works on repository tabs and the global Pull requests link on github.com. Links with an existing search filter keep that filter.</footer>
+    </main>
+  </body>
+</html>
