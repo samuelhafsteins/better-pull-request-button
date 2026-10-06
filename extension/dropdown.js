@@ -85,7 +85,7 @@
         return;
       }
       const caretBounds = host.getBoundingClientRect();
-      const padding = Math.min(parseFloat(computed.paddingRight) || 0, 4);
+      const padding = Math.min(parseFloat(computed.paddingRight) || 0, 6);
       const left = (parseFloat(host.style.left) || 0) + bounds.right - padding - caretBounds.left;
       const top = (parseFloat(host.style.top) || 0) + bounds.top + (bounds.height - 28) / 2 - caretBounds.top;
       if (Math.abs(left - (parseFloat(host.style.left) || 0)) > 0.01) host.style.left = `${left}px`;
