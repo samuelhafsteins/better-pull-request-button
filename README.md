@@ -4,6 +4,12 @@ A small browser extension that applies your preferred search filter when you cli
 
 Set your filter once—for example, `is:pr is:open -is:draft` and repository Pull requests tabs and the global Pull requests link will use it automatically.
 
+## Why I built this
+
+I got tired of changing GitHub’s pull request filters every time I opened a repository. I wanted to set my own default, but GitHub didn’t offer that option, so I built it myself.
+
+Now the Pull requests link opens with my preferred filter, and a small dropdown keeps other useful filters one click away.
+
 ## Install
 
 ### Chrome, Chromium, Edge, or Brave
@@ -63,12 +69,6 @@ npm run check
 With Node.js 22+ and Chromium installed, run `npm run test:browser` for browser checks, including a regression check that the arrow leaves GitHub’s tab dimensions unchanged. Set `CHROMIUM` to your browser executable if needed. `LIVE_GITHUB=1 npm run test:browser` also compares the real GitHub navigation with the extension enabled and disabled at multiple window widths.
 
 Load `extension/` in your browser, then reload the extension and GitHub tabs after code changes.
-
-### Firefox source code submission
-
-When Mozilla asks **“Do You Need to Submit Source Code?”**, select **No**. The extension package already contains the original, readable JavaScript, HTML, and CSS. There is no minification, bundling, transpilation, or code generation.
-
-`web-ext build` only packages the files into a ZIP; it does not transform the code. A separate source code archive is therefore not needed.
 
 ## License
 
