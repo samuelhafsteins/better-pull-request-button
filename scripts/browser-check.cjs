@@ -181,7 +181,7 @@ async function main() {
     assert.equal(await evaluate(github, geometry), baseline, `Tab geometry changed at ${width}px`);
     assert.equal(await evaluate(github, 'document.querySelector("nav").scrollWidth'), baselineScroll);
     assert.equal(await evaluate(github, 'getComputedStyle(document.querySelector("#repo").nextElementSibling).position'), 'absolute');
-    assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getBoundingClientRect().left >= document.querySelector('#repo').getBoundingClientRect().right - 8`), true);
+    assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getBoundingClientRect().left >= document.querySelector('#repo').getBoundingClientRect().right - 4`), true);
   }
   await evaluate(github, 'document.querySelector("#repo").style.visibility="hidden"');
   await until(github, 'document.querySelector("#repo").nextElementSibling.hidden');
