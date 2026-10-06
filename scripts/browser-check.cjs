@@ -53,7 +53,19 @@ async function main() {
           <li><a href="/octocat/hello-world/actions" class="UnderlineNav-item js-responsive-underlinenav-item">Actions</a></li>
           <li><a href="/octocat/hello-world/projects" class="UnderlineNav-item js-responsive-underlinenav-item">Projects</a></li>
           </ul><div class="js-responsive-underlinenav-overflow"><button>More</button><a id="overflow" href="/octocat/hello-world/pulls">Pull requests</a></div></nav>
-          <a id="global" href="/pulls">Pull requests</a> <a id="explicit" href="/pulls?q=is%3Aclosed">Closed</a>`).toString('base64'),
+          <a id="global" href="/pulls">Pull requests</a> <a id="explicit" href="/pulls?q=is%3Aclosed">Closed</a>
+          <script>
+            window.shortcutEvents = [];
+            for (const target of [window, document]) {
+              for (const type of ['keydown', 'keypress', 'keyup']) {
+                target.addEventListener(type, event => {
+                  if (event.target.matches?.('input, textarea')) return;
+                  window.shortcutEvents.push(event.type + ':' + event.key);
+                  if (event.key.length === 1) event.preventDefault();
+                }, true);
+              }
+            }
+          </script>`).toString('base64'),
       }, message.sessionId).catch(console.error);
     } else if (message.method === 'Runtime.exceptionThrown') {
       console.error('Browser exception:', JSON.stringify(message.params.exceptionDetails));
@@ -96,6 +108,15 @@ async function main() {
     await until(github, `document.querySelectorAll('[data-bpr-dropdown]').length ${value ? '>' : '==='} 0`);
   }
 
+  async function pressKey(sessionId, key, code, windowsVirtualKeyCode, text) {
+    await send('Input.dispatchKeyEvent', { type: 'keyDown', key, code, windowsVirtualKeyCode, text }, sessionId);
+    await send('Input.dispatchKeyEvent', { type: 'keyUp', key, code, windowsVirtualKeyCode }, sessionId);
+  }
+
+  async function typeText(sessionId, text) {
+    for (const key of text) await pressKey(sessionId, key, undefined, undefined, key);
+  }
+
   const geometry = `JSON.stringify([...document.querySelectorAll('.UnderlineNav-body, .UnderlineNav-body > li, .UnderlineNav-item, [data-tab-item], li:has(> [data-tab-item]), ul:has(> li > [data-tab-item])')].map(element => {
     const rect = element.getBoundingClientRect();
     const style = getComputedStyle(element);
@@ -123,9 +144,19 @@ async function main() {
   assert.equal(await evaluate(github, `Math.abs(document.querySelector('#repo').getBoundingClientRect().top + document.querySelector('#repo').getBoundingClientRect().height / 2 - (${root}.querySelector('.trigger').getBoundingClientRect().top + 14)) < 1`), true);
 
   // Create a named action in the settings page, leaving the main action intact.
-  await evaluate(options, 'document.querySelector("#add-action").click(); document.querySelector("[data-field=label]").value="My PRs"; document.querySelector("[data-field=filter]").value="is:pr is:open author:@me"; document.querySelector("form").requestSubmit()');
+  await evaluate(options, 'document.querySelector("#add-action").click()');
+  assert.equal(await evaluate(options, 'document.querySelector(".action").open'), true);
+  await evaluate(options, 'document.querySelector("[data-field=label]").value="My PRs"; document.querySelector("[data-field=filter]").value="is:pr is:open author:@me"; document.querySelector("form").requestSubmit()');
   await until(github, `${root}.querySelectorAll('a').length === 2`);
-  await evaluate(github, `${root}.querySelector('.trigger').click()`);
+  // Click in the wider target, outside the visible caret glyph.
+  await send('Page.bringToFront', {}, github);
+  const hit = await evaluate(github, `(() => {
+    const rect = ${root}.querySelector('.trigger').getBoundingClientRect();
+    return {x: rect.left + 2, y: rect.top + rect.height / 2, width: rect.width};
+  })()`);
+  assert.equal(hit.width, 24);
+  await send('Input.dispatchMouseEvent', {type: 'mousePressed', x: hit.x, y: hit.y, button: 'left', clickCount: 1}, github);
+  await send('Input.dispatchMouseEvent', {type: 'mouseReleased', x: hit.x, y: hit.y, button: 'left', clickCount: 1}, github);
   assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getAttribute('aria-expanded')`), 'true');
   assert.equal(await evaluate(github, `new URL(${root}.querySelectorAll('a')[1].href).pathname`), '/octocat/hello-world/pulls');
   assert.equal(await evaluate(github, `new URL(${root}.querySelectorAll('a')[1].href).searchParams.get('q')`), 'is:pr is:open author:@me');
@@ -138,11 +169,33 @@ async function main() {
   assert.equal(await evaluate(github, `${root}.activeElement === ${root}.querySelector('.trigger')`), true);
   assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getAttribute('aria-expanded')`), 'false');
 
-  // Add another action directly from the GitHub dropdown.
-  await evaluate(github, `${root}.querySelector('.trigger').click(); ${root}.querySelector('#filters > button').click(); ${root}.querySelector('input[name=label]').value='Drafts'; ${root}.querySelector('input[name=filter]').value='is:pr is:open is:draft'; ${root}.querySelector('form').requestSubmit()`);
+  // Native typing must beat even window-capture shortcuts that cannot see
+  // through the shadow root. Editing, Tab and Enter should still work normally.
+  await evaluate(github, `${root}.querySelector('.trigger').click(); ${root}.querySelector('#filters > button').click(); window.shortcutEvents = []`);
+  await typeText(github, 'Draftx');
+  await pressKey(github, 'Backspace', 'Backspace', 8);
+  await typeText(github, 's');
+  assert.equal(await evaluate(github, `${root}.querySelector('input[name=label]').value`), 'Drafts');
+  await pressKey(github, 'Tab', 'Tab', 9);
+  assert.equal(await evaluate(github, `${root}.activeElement.name`), 'filter');
+  await typeText(github, 'is:pr is:open is:draft');
+  assert.equal(await evaluate(github, `${root}.querySelector('input[name=filter]').value`), 'is:pr is:open is:draft');
+  assert.deepEqual(await evaluate(github, 'window.shortcutEvents'), []);
+  await pressKey(github, 'Enter', 'Enter', 13, '\r');
   await until(github, `${root}.querySelectorAll('a').length === 3`);
   await until(options, 'document.querySelectorAll(".action").length === 2');
   assert.equal(await evaluate(github, `new URL(${root}.querySelectorAll('a')[2].href).searchParams.get('q')`), 'is:pr is:open is:draft');
+
+  await evaluate(github, `${root}.querySelector('#filters > button').click()`);
+  await pressKey(github, 'Escape', 'Escape', 27);
+  assert.equal(await evaluate(github, `${root}.activeElement === ${root}.querySelector('.trigger')`), true);
+  assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getAttribute('aria-expanded')`), 'false');
+  assert.deepEqual(await evaluate(github, 'window.shortcutEvents'), []);
+  // Page shortcuts are still available when focus is outside the extension.
+  await evaluate(github, 'document.body.tabIndex = -1; document.body.focus()');
+  await pressKey(github, 's', 'KeyS', 83, 's');
+  assert.equal(await evaluate(github, 'window.shortcutEvents.includes("keydown:s")'), true);
+  await evaluate(github, `${root}.querySelector('.trigger').click()`);
 
   // An actual click navigates using the selected extra filter.
   await evaluate(github, `${root}.querySelectorAll('a')[2].click()`);
@@ -152,7 +205,15 @@ async function main() {
   assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getAttribute('aria-expanded')`), 'false');
 
   // Editing/removing actions in settings updates all GitHub dropdowns.
-  await evaluate(options, 'document.querySelector("[data-field=label]").value="Mine"; document.querySelector("[data-field=label]").dispatchEvent(new Event("input", {bubbles:true})); document.querySelectorAll(".action")[1].querySelector("button").click(); document.querySelector("form").requestSubmit()');
+  await send('Page.reload', {}, options);
+  await until(options, 'document.querySelector("#settings")?.disabled === false && document.querySelectorAll(".action").length === 2');
+  assert.equal(await evaluate(options, '[...document.querySelectorAll(".action")].every(row => !row.open)'), true);
+  assert.deepEqual(await evaluate(options, '[...document.querySelectorAll(".action summary")].map(summary => summary.textContent)'), ['My PRs', 'Drafts']);
+  await evaluate(options, 'document.querySelector(".action summary").click()');
+  assert.equal(await evaluate(options, 'document.querySelector(".action").open'), true);
+  await evaluate(options, 'document.querySelector("[data-field=label]").value="Mine"; document.querySelector("[data-field=label]").dispatchEvent(new Event("input", {bubbles:true}))');
+  assert.equal(await evaluate(options, 'document.querySelector(".action summary").textContent'), 'Mine');
+  await evaluate(options, 'document.querySelectorAll(".action")[1].querySelector("summary").click(); document.querySelectorAll(".action")[1].querySelector("button").click(); document.querySelector("form").requestSubmit()');
   await until(github, `${root}.querySelectorAll('a').length === 2 && ${root}.querySelectorAll('a')[1].textContent.startsWith('Mine')`);
   await evaluate(options, 'document.querySelector("#filter").value=""; document.querySelector("#filter").dispatchEvent(new Event("input", {bubbles:true})); document.querySelector("form").requestSubmit()');
   await until(github, 'document.querySelector("#repo").getAttribute("href") === "/octocat/hello-world/pulls"');
@@ -181,7 +242,7 @@ async function main() {
     assert.equal(await evaluate(github, geometry), baseline, `Tab geometry changed at ${width}px`);
     assert.equal(await evaluate(github, 'document.querySelector("nav").scrollWidth'), baselineScroll);
     assert.equal(await evaluate(github, 'getComputedStyle(document.querySelector("#repo").nextElementSibling).position'), 'absolute');
-    assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getBoundingClientRect().left >= document.querySelector('#repo').getBoundingClientRect().right - 6`), true);
+    assert.equal(await evaluate(github, `${root}.querySelector('.trigger svg').getBoundingClientRect().left >= document.querySelector('#repo').getBoundingClientRect().right - 6`), true);
   }
   await evaluate(github, 'document.querySelector("#repo").style.visibility="hidden"');
   await until(github, 'document.querySelector("#repo").nextElementSibling.hidden');

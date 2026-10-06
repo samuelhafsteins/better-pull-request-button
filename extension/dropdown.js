@@ -3,6 +3,20 @@
 
   const { DEFAULT_SETTINGS, normalizeSettings, getFilteredUrl } = BetterPullRequestButton;
   let closeActive = null;
+  const keyboardHandlers = new WeakMap();
+
+  // Register at document_start, before GitHub's window/document shortcuts.
+  // Outside a shadow root, event.target is our host rather than the input, so
+  // GitHub cannot tell that the user is typing. Stop propagation early, keeping
+  // browser defaults (text editing, Tab, Enter, composition) intact.
+  for (const eventName of ["keydown", "keypress", "keyup"]) {
+    window.addEventListener(eventName, (event) => {
+      const root = event.composedPath().find((node) => keyboardHandlers.has(node));
+      if (!root) return;
+      event.stopImmediatePropagation();
+      if (eventName === "keydown") keyboardHandlers.get(root)(event);
+    }, true);
+  }
 
   function create(link) {
     const host = document.createElement("span");
@@ -15,7 +29,7 @@
       * { box-sizing: border-box; }
       button, input { font: inherit; }
       button { cursor: pointer; }
-      .trigger { display: grid; place-items: center; width: 12px; height: 28px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--fgColor-default, #1f2328); }
+      .trigger { display: grid; place-items: center; flex: none; width: 24px; height: 28px; margin-left: -6px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--fgColor-default, #1f2328); }
       .trigger:hover, .item:hover, .item:focus-visible { background: var(--bgColor-muted, #f6f8fa); }
       :focus-visible { outline: 2px solid #0969da; outline-offset: -2px; }
       .panel { position: fixed; inset: auto; margin: 0; padding: 6px; width: 310px; max-width: calc(100vw - 16px); overflow: auto; z-index: 2147483647; border: 1px solid var(--borderColor-default, #d1d9e0); border-radius: 8px; box-shadow: 0 8px 24px #0003; background: var(--bgColor-default, #fff); color: var(--fgColor-default, #1f2328); font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-align: start; }
@@ -242,7 +256,8 @@
 
     trigger.addEventListener("click", () => opened ? close(true) : open());
     root.addEventListener("click", (event) => event.stopPropagation());
-    root.addEventListener("keydown", (event) => {
+    keyboardHandlers.set(root, (event) => {
+      if (event.isComposing) return;
       if (event.key === "Escape" && opened) {
         event.preventDefault();
         event.stopPropagation();
@@ -284,6 +299,7 @@
         lifetime.abort();
         sizeObserver.disconnect();
         visibilityObserver.disconnect();
+        keyboardHandlers.delete(root);
         host.remove();
       },
     };

@@ -29,8 +29,13 @@
   }
 
   function addAction(action = { label: "", filter: "" }) {
-    const row = document.createElement("div");
+    const row = document.createElement("details");
     row.className = "action";
+    const summary = document.createElement("summary");
+    summary.textContent = action.label || "New filter";
+    const fields = document.createElement("div");
+    fields.className = "action-fields";
+    row.append(summary, fields);
     for (const [key, text] of [["label", "Name"], ["filter", "Filter"]]) {
       const label = document.createElement("label");
       label.textContent = text;
@@ -41,8 +46,13 @@
       input.value = action[key];
       input.required = true;
       input.spellcheck = false;
+      if (key === "label") {
+        input.addEventListener("input", () => {
+          summary.textContent = input.value.trim() || "New filter";
+        });
+      }
       label.append(input);
-      row.append(label);
+      fields.append(label);
     }
     const remove = document.createElement("button");
     remove.type = "button";
@@ -53,13 +63,15 @@
       markDirty("actions");
       addButton.focus();
     });
-    row.append(remove);
+    fields.append(remove);
     actionsList.append(row);
     return row;
   }
 
   addButton.addEventListener("click", () => {
-    addAction().querySelector("input").focus();
+    const row = addAction();
+    row.open = true;
+    row.querySelector("input").focus();
     markDirty("actions");
   });
 

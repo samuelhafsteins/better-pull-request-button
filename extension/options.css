@@ -35,7 +35,10 @@ button:hover { background: #1a7f37; }
 button:disabled { opacity: 0.6; cursor: wait; }
 h2 { font-size: 15px; margin: 0 0 8px; }
 section { margin: 24px 0; border-top: 1px solid var(--border); padding-top: 20px; }
-.action { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.action { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; }
+.action summary { padding: 10px 12px; color: inherit; font-size: 13px; font-weight: 600; overflow-wrap: anywhere; }
+.action[open] summary { border-bottom: 1px solid var(--border); }
+.action-fields { padding: 12px; }
 .action label { font-size: 12px; }
 .action input, .action textarea { margin-top: 6px; }
 .action button { font-size: 12px; padding: 5px 10px; }
