@@ -8,7 +8,7 @@ const source = readFileSync(require.resolve("../extension/content.js"), "utf8");
 
 function createPage(saved = {}) {
   class Link {
-    constructor(href) { this.href = href; this.isConnected = true; }
+    constructor(href, text = "Pull requests") { this.href = href; this.innerText = text; this.isConnected = true; }
     getAttribute() { return this.href; }
     setAttribute(name, value) { this.href = value; }
     matches(selector) { return selector === "a" || this.href !== null; }
@@ -135,6 +135,23 @@ test("creates one dropdown per eligible link and updates saved actions live", ()
   assert.deepEqual(page.dropdowns.get(page.links[0]).settings.actions, actions);
   assert.equal(page.dropdowns.get(page.links[0]).original, "/octocat/hello-world/pulls");
   assert.equal(new URL(page.links[0].href).searchParams.get("q"), "is:pr is:open");
+});
+
+test("only adds dropdowns to labeled Pull requests links, including updated labels", () => {
+  const page = createPage();
+  for (const text of ["", "Inbox", "Issues"]) {
+    const link = new page.Link("/pulls", text);
+    page.mutate([{ type: "childList", addedNodes: [link] }]);
+    assert.equal(page.dropdowns.has(link), false);
+    assert.equal(new URL(link.href).searchParams.get("q"), "is:pr is:open");
+  }
+  const link = page.links[0];
+  link.innerText = "";
+  page.mutate([{ type: "childList", target: link, addedNodes: [] }]);
+  assert.equal(page.dropdowns.has(link), false);
+  link.innerText = "Pull requests\n12";
+  page.mutate([{ type: "childList", target: link, addedNodes: [] }]);
+  assert.equal(page.dropdowns.has(link), true);
 });
 
 test("keeps dropdown actions with a blank default and removes dropdowns when disabled", () => {

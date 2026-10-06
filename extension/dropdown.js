@@ -29,9 +29,15 @@
       * { box-sizing: border-box; }
       button, input { font: inherit; }
       button { cursor: pointer; }
-      .trigger { display: grid; place-items: center; flex: none; width: 24px; height: 28px; margin-left: -6px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--fgColor-default, #1f2328); }
-      .trigger:hover, .item:hover, .item:focus-visible { background: var(--bgColor-muted, #f6f8fa); }
+      .trigger { position: relative; display: grid; place-items: center; flex: none; width: 24px; height: 28px; margin-left: -6px; padding: 0; border: 0; border-radius: 4px; background: transparent; color: var(--fgColor-default, #1f2328); }
+      /* Keep the wide click target, but paint only inside the caret's slot so
+         the highlight cannot cover the tab label or its count badge. */
+      .trigger::before { content: ""; position: absolute; inset: 0 6px; border-radius: 4px; }
+      .trigger svg { position: relative; }
+      .trigger:hover::before, .item:hover, .item:focus-visible { background: var(--bgColor-muted, #f6f8fa); }
       :focus-visible { outline: 2px solid #0969da; outline-offset: -2px; }
+      .trigger:focus-visible { outline: none; }
+      .trigger:focus-visible::before { outline: 2px solid #0969da; outline-offset: -2px; }
       .panel { position: fixed; inset: auto; margin: 0; padding: 6px; width: 310px; max-width: calc(100vw - 16px); overflow: auto; z-index: 2147483647; border: 1px solid var(--borderColor-default, #d1d9e0); border-radius: 8px; box-shadow: 0 8px 24px #0003; background: var(--bgColor-default, #fff); color: var(--fgColor-default, #1f2328); font: 13px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; text-align: start; }
       [hidden] { display: none !important; }
       .item { display: block; width: 100%; border: 0; border-radius: 4px; padding: 8px 10px; background: transparent; color: inherit; text-align: start; text-decoration: none; overflow-wrap: anywhere; }

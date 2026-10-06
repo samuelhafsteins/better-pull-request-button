@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Better Pull Request Button",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Apply your saved default filter when opening Pull requests on GitHub.",
   "permissions": ["storage"],
   "icons": {

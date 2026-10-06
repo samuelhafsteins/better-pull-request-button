@@ -12,7 +12,8 @@
   }
 
   function updateDropdown(link, original) {
-    if (!settings.enabled || !getPullRequestsUrl(original, document.baseURI)) {
+    if (!settings.enabled || !getPullRequestsUrl(original, document.baseURI)
+      || !/^Pull requests(?:\s|$)/i.test(link.innerText.trim())) {
       removeDropdown(link);
       return;
     }
@@ -57,6 +58,8 @@
         if (mutation.target.matches("a")) updateLink(mutation.target);
       } else {
         mutation.addedNodes.forEach(updateTree);
+        const link = mutation.target?.closest?.("a[href]");
+        if (link) updateLink(link);
       }
     }
     for (const [link, dropdown] of dropdowns) {

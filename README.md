@@ -33,7 +33,7 @@ Firefox removes temporary add-ons when it closes. Permanent Firefox installation
 2. Enter your default filter and click **Save filters**.
 3. Open or refresh GitHub after installing, then click **Pull requests**.
 
-Clicking **Pull requests** uses your default filter. The **▾** button beside it opens a menu with your default action and any extra named filters you have saved.
+Clicking **Pull requests** uses your default filter. The **▾** button beside labeled **Pull requests** links opens a menu with your default action and any extra named filters you have saved. Icon-only header and sidebar links use your default filter without a dropdown.
 
 - Choose **+ Add filter…** in the dropdown to save another action directly on GitHub (for example, “Waiting on me”).
 - Use **Dropdown filters** in the extension popup to add, edit, or remove actions, then click **Save filters**.

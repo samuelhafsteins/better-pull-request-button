@@ -54,6 +54,8 @@ async function main() {
           <li><a href="/octocat/hello-world/projects" class="UnderlineNav-item js-responsive-underlinenav-item">Projects</a></li>
           </ul><div class="js-responsive-underlinenav-overflow"><button>More</button><a id="overflow" href="/octocat/hello-world/pulls">Pull requests</a></div></nav>
           <a id="global" href="/pulls">Pull requests</a> <a id="explicit" href="/pulls?q=is%3Aclosed">Closed</a>
+          <a id="header-icon" href="/pulls" aria-label="Pull requests"><svg width="16" height="16"><title>Pull requests</title></svg></a>
+          <a id="sidebar-icon" href="/pulls" aria-label="Inbox"><svg width="16" height="16"></svg></a>
           <script>
             window.shortcutEvents = [];
             for (const target of [window, document]) {
@@ -134,11 +136,15 @@ async function main() {
   await evaluate(options, 'document.querySelector("#filter").value = "is:pr is:open review-requested:@me"; document.querySelector("#filter").dispatchEvent(new Event("input", {bubbles:true})); document.querySelector("form").requestSubmit()');
   await until(options, 'document.querySelector("#status").textContent.startsWith("Saved.")');
   await until(github, 'new URL(document.querySelector("#repo").href).searchParams.get("q") === "is:pr is:open review-requested:@me"');
-  await evaluate(github, 'const a = document.createElement("a"); a.id="dynamic"; a.href="/new/repo/pulls"; document.body.append(a)');
+  await evaluate(github, 'const a = document.createElement("a"); a.id="dynamic"; a.href="/new/repo/pulls"; a.textContent="Pull requests"; document.body.append(a)');
   await until(github, 'document.querySelector("#dynamic").href.includes("q=")');
 
   const root = 'document.querySelector("#repo").nextElementSibling.shadowRoot';
   assert.equal(await evaluate(github, 'document.querySelectorAll("[data-bpr-dropdown]").length'), 4);
+  for (const id of ['header-icon', 'sidebar-icon']) {
+    assert.equal(await evaluate(github, `document.querySelector('#${id}').nextElementSibling?.hasAttribute('data-bpr-dropdown') ?? false`), false);
+    assert.equal(await evaluate(github, `new URL(document.querySelector('#${id}').href).searchParams.get('q')`), 'is:pr is:open review-requested:@me');
+  }
   assert.equal(await evaluate(github, 'getComputedStyle(document.querySelector(".js-responsive-underlinenav-overflow")).display'), 'block');
   assert.equal(await evaluate(github, 'getComputedStyle(document.querySelector(".UnderlineNav-body > li")).display'), 'none');
   assert.equal(await evaluate(github, `Math.abs(document.querySelector('#repo').getBoundingClientRect().top + document.querySelector('#repo').getBoundingClientRect().height / 2 - (${root}.querySelector('.trigger').getBoundingClientRect().top + 14)) < 1`), true);
@@ -155,6 +161,19 @@ async function main() {
     return {x: rect.left + 2, y: rect.top + rect.height / 2, width: rect.width};
   })()`);
   assert.equal(hit.width, 24);
+  // The hover/focus paint stays in the caret slot, outside the tab's text,
+  // even though its click target extends farther for easier interaction.
+  assert.equal(await evaluate(github, `(() => {
+    const trigger = ${root}.querySelector('.trigger');
+    const paint = getComputedStyle(trigger, '::before');
+    const bounds = trigger.getBoundingClientRect();
+    const slot = document.querySelector('#repo').nextElementSibling.getBoundingClientRect();
+    const text = document.createRange();
+    text.selectNodeContents(document.querySelector('#repo'));
+    const left = bounds.left + parseFloat(paint.left);
+    const right = bounds.right - parseFloat(paint.right);
+    return left >= text.getBoundingClientRect().right && left >= slot.left && right <= slot.right;
+  })()`), true);
   await send('Input.dispatchMouseEvent', {type: 'mousePressed', x: hit.x, y: hit.y, button: 'left', clickCount: 1}, github);
   await send('Input.dispatchMouseEvent', {type: 'mouseReleased', x: hit.x, y: hit.y, button: 'left', clickCount: 1}, github);
   assert.equal(await evaluate(github, `${root}.querySelector('.trigger').getAttribute('aria-expanded')`), 'true');
