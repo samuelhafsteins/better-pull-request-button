@@ -2,7 +2,7 @@
 
 A small browser extension that applies your preferred search filter when you click **Pull requests** on GitHub.
 
-Set your filter once—for example, `is:pr is:open -is:draft`—and repository Pull requests tabs and the global Pull requests link will use it automatically.
+Set your filter once—for example, `is:pr is:open -is:draft` and repository Pull requests tabs and the global Pull requests link will use it automatically.
 
 ## Install
 
@@ -24,8 +24,14 @@ Firefox removes temporary add-ons when it closes. Permanent Firefox installation
 ## Use
 
 1. Click the extension’s toolbar icon (you may need to pin it first).
-2. Enter your default filter and click **Save filter**.
+2. Enter your default filter and click **Save filters**.
 3. Open or refresh GitHub after installing, then click **Pull requests**.
+
+Clicking **Pull requests** uses your default filter. The **▾** button beside it opens a menu with your default action and any extra named filters you have saved.
+
+- Choose **+ Add filter…** in the dropdown to save another action directly on GitHub (for example, “Waiting on me”).
+- Use **Dropdown filters** in the extension popup to add, edit, or remove actions, then click **Save filters**.
+- Extra actions use the same repository or global Pull requests destination as the main link. They support opening in a new tab and do not change your default.
 
 Examples:
 
@@ -37,13 +43,13 @@ Examples:
 | Your open pull requests | `is:pr is:open author:@me` |
 | Recently updated pull requests | `is:pr is:open sort:updated-desc` |
 
-Settings changes apply to links in already-open GitHub tabs. Disable the checkbox or clear the filter to use GitHub’s normal links again.
+Settings changes apply to links and dropdowns in already-open GitHub tabs. Clear the default filter to use GitHub’s normal main link while keeping your dropdown actions. Disable the checkbox to restore normal links and hide the dropdowns.
 
 The extension updates links to `github.com/pulls` and `github.com/<owner>/<repo>/pulls`. Links with an existing `q` search parameter keep their explicit filter, and individual pull requests are untouched. It supports GitHub’s dynamic navigation, keyboard activation, and opening links in new tabs. It changes link destinations, so visiting a URL directly does not trigger a redirect. GitHub Enterprise domains are not currently supported.
 
 ## Privacy
 
-No analytics, external services, or GitHub tokens. The extension only runs on `github.com` and uses the browser’s `storage` permission to save your filter and enabled state. Settings use browser sync storage and may sync through your browser account if enabled.
+No analytics, external services, or GitHub tokens. The extension only runs on `github.com` and uses the browser’s `storage` permission to save your default filter, named dropdown filters, and enabled state. Settings use browser sync storage and may sync through your browser account if enabled.
 
 ## Development
 
@@ -59,3 +65,5 @@ Load `extension/` in your browser, then reload the extension and GitHub tabs aft
 ## License
 
 [MIT](LICENSE)
+
+The pull request icon is GitHub’s [`git-pull-request` Octicon](https://github.com/primer/octicons), used under its [MIT license](extension/icons/LICENSE).

@@ -1,12 +1,24 @@
 {
   "manifest_version": 3,
   "name": "Better Pull Request Button",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Apply your saved default filter when opening Pull requests on GitHub.",
   "permissions": ["storage"],
+  "icons": {
+    "16": "icons/pull-request-16.png",
+    "32": "icons/pull-request-32.png",
+    "48": "icons/pull-request-48.png",
+    "128": "icons/pull-request-128.png"
+  },
   "action": {
     "default_title": "Configure your pull request filter",
-    "default_popup": "options.html"
+    "default_popup": "options.html",
+    "default_icon": {
+      "16": "icons/pull-request-16.png",
+      "32": "icons/pull-request-32.png",
+      "48": "icons/pull-request-48.png",
+      "128": "icons/pull-request-128.png"
+    }
   },
   "options_ui": {
     "page": "options.html",
@@ -15,7 +27,8 @@
   "content_scripts": [
     {
       "matches": ["https://github.com/*"],
-      "js": ["filter.js", "content.js"],
+      "js": ["filter.js", "dropdown.js", "content.js"],
+      "css": ["content.css"],
       "run_at": "document_start"
     }
   ],

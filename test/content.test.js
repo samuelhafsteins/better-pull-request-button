@@ -8,20 +8,34 @@ const source = readFileSync(require.resolve("../extension/content.js"), "utf8");
 
 function createPage(saved = {}) {
   class Link {
-    constructor(href) { this.href = href; }
+    constructor(href) { this.href = href; this.isConnected = true; }
     getAttribute() { return this.href; }
     setAttribute(name, value) { this.href = value; }
     matches(selector) { return selector === "a" || this.href !== null; }
-    closest() { return this; }
+    closest(selector) { return selector === "a[href]" ? this : null; }
     querySelectorAll() { return []; }
   }
 
   const links = [new Link("/octocat/hello-world/pulls"), new Link("/pulls?q=is%3Apr+is%3Aclosed")];
   const events = {};
+  const dropdowns = new Map();
+  let createdDropdowns = 0;
   let onMutation;
   let onStorageChange;
   const context = {
     BetterPullRequestButton: filter,
+    BetterPullRequestDropdown: {
+      create: (link) => {
+        createdDropdowns++;
+        const dropdown = {
+          attach() {},
+          update(original, settings) { this.original = original; this.settings = settings; },
+          remove() { dropdowns.delete(link); },
+        };
+        dropdowns.set(link, dropdown);
+        return dropdown;
+      },
+    },
     console,
     document: {
       baseURI: "https://github.com/octocat/hello-world",
@@ -41,7 +55,7 @@ function createPage(saved = {}) {
     },
   };
   vm.runInNewContext(source, context);
-  return { links, Link, events, mutate: (records) => onMutation(records), change: (changes, area = "sync") => onStorageChange(changes, area) };
+  return { links, Link, events, dropdowns, get createdDropdowns() { return createdDropdowns; }, mutate: (records) => onMutation(records), change: (changes, area = "sync") => onStorageChange(changes, area) };
 }
 
 test("applies stored settings and preserves explicit query links", () => {
@@ -108,4 +122,40 @@ test("ignores unrelated storage changes and restores defaults after storage remo
   assert.equal(new URL(page.links[0].href).searchParams.get("q"), "author:@me");
   page.change({ filter: {} });
   assert.equal(new URL(page.links[0].href).searchParams.get("q"), filter.DEFAULT_SETTINGS.filter);
+});
+
+test("creates one dropdown per eligible link and updates saved actions live", () => {
+  const page = createPage();
+  assert.equal(page.dropdowns.size, 1);
+  assert.equal(page.createdDropdowns, 1);
+  page.mutate([{ type: "attributes", target: page.links[0] }]);
+  assert.equal(page.createdDropdowns, 1);
+  const actions = [{ label: "Reviews", filter: "review-requested:@me" }];
+  page.change({ actions: { newValue: actions } });
+  assert.deepEqual(page.dropdowns.get(page.links[0]).settings.actions, actions);
+  assert.equal(page.dropdowns.get(page.links[0]).original, "/octocat/hello-world/pulls");
+  assert.equal(new URL(page.links[0].href).searchParams.get("q"), "is:pr is:open");
+});
+
+test("keeps dropdown actions with a blank default and removes dropdowns when disabled", () => {
+  const page = createPage({ filter: "" });
+  assert.equal(page.links[0].href, "/octocat/hello-world/pulls");
+  assert.equal(page.dropdowns.size, 1);
+  page.change({ enabled: { newValue: false } });
+  assert.equal(page.dropdowns.size, 0);
+  page.change({ enabled: { newValue: true } });
+  assert.equal(page.dropdowns.size, 1);
+});
+
+test("cleans up dropdowns after navigation removes or repurposes links", () => {
+  const page = createPage();
+  page.links[0].href = "/octocat/hello-world/issues";
+  page.mutate([{ type: "attributes", target: page.links[0] }]);
+  assert.equal(page.dropdowns.size, 0);
+  page.links[0].href = "/pulls";
+  page.mutate([{ type: "attributes", target: page.links[0] }]);
+  assert.equal(page.dropdowns.size, 1);
+  page.links[0].isConnected = false;
+  page.mutate([{ type: "childList", addedNodes: [] }]);
+  assert.equal(page.dropdowns.size, 0);
 });

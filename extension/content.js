@@ -1,14 +1,32 @@
 (() => {
   "use strict";
 
-  const { DEFAULT_SETTINGS, normalizeSettings, getFilteredUrl } = BetterPullRequestButton;
+  const { DEFAULT_SETTINGS, normalizeSettings, getPullRequestsUrl, getFilteredUrl } = BetterPullRequestButton;
   const rewrittenLinks = new WeakMap();
+  const dropdowns = new Map();
   let settings = DEFAULT_SETTINGS;
+
+  function removeDropdown(link) {
+    dropdowns.get(link)?.remove();
+    dropdowns.delete(link);
+  }
+
+  function updateDropdown(link, original) {
+    if (!settings.enabled || !getPullRequestsUrl(original, document.baseURI)) {
+      removeDropdown(link);
+      return;
+    }
+    if (!dropdowns.has(link)) {
+      dropdowns.set(link, BetterPullRequestDropdown.create(link));
+    }
+    dropdowns.get(link).update(original, settings);
+  }
 
   function updateLink(link) {
     const href = link.getAttribute("href");
     if (href === null) {
       rewrittenLinks.delete(link);
+      removeDropdown(link);
       return;
     }
 
@@ -24,6 +42,7 @@
       rewrittenLinks.delete(link);
       if (href !== original) link.setAttribute("href", original);
     }
+    updateDropdown(link, original);
   }
 
   function updateTree(root) {
@@ -39,6 +58,10 @@
       } else {
         mutation.addedNodes.forEach(updateTree);
       }
+    }
+    for (const [link, dropdown] of dropdowns) {
+      if (!link.isConnected) removeDropdown(link);
+      else dropdown.attach();
     }
   });
 
@@ -69,10 +92,11 @@
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync") return;
-    if (!changes.enabled && !changes.filter) return;
+    if (!changes.enabled && !changes.filter && !changes.actions) return;
     settings = normalizeSettings({
       enabled: changes.enabled ? changes.enabled.newValue : settings.enabled,
       filter: changes.filter ? changes.filter.newValue : settings.filter,
+      actions: changes.actions ? changes.actions.newValue : settings.actions,
     });
     updateTree(document);
   });

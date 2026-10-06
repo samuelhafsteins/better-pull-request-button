@@ -14,14 +14,15 @@
 body { min-width: 360px; margin: 0; }
 main { max-width: 540px; padding: 28px; margin: 0 auto; }
 .eyebrow { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; color: var(--accent); }
-h1 { font-size: 23px; line-height: 1.2; margin: 10px 0; letter-spacing: -0.6px; }
+h1 { display: flex; align-items: center; gap: 10px; font-size: 23px; line-height: 1.2; margin: 10px 0; letter-spacing: -0.6px; }
+h1 img { flex-shrink: 0; }
 header p, .hint, footer { color: var(--muted); line-height: 1.5; }
 header { margin-bottom: 24px; }
 fieldset { border: 0; padding: 0; margin: 0; min-width: 0; }
 label { display: block; font-weight: 600; margin-bottom: 8px; }
 .toggle { display: flex; gap: 8px; align-items: center; margin-bottom: 24px; font-weight: 400; }
 input[type="checkbox"] { width: 16px; height: 16px; accent-color: var(--accent); flex-shrink: 0; }
-textarea { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 6px; padding: 10px; background: var(--surface); color: inherit; font: 13px/1.5 ui-monospace, monospace; }
+textarea, input[type="text"] { width: 100%; resize: vertical; border: 1px solid var(--border); border-radius: 6px; padding: 10px; background: var(--surface); color: inherit; font: 13px/1.5 ui-monospace, monospace; }
 :focus-visible { outline: 2px solid #0969da; outline-offset: 3px; }
 .hint { margin: 8px 0 18px; font-size: 12px; }
 details { margin-bottom: 22px; }
@@ -32,6 +33,14 @@ code { display: block; margin-top: 5px; overflow-wrap: anywhere; font-size: 12px
 button { border: 1px solid #1b1f2426; border-radius: 6px; background: #1f883d; color: #ffffff; padding: 9px 16px; font: inherit; font-weight: 600; cursor: pointer; }
 button:hover { background: #1a7f37; }
 button:disabled { opacity: 0.6; cursor: wait; }
+h2 { font-size: 15px; margin: 0 0 8px; }
+section { margin: 24px 0; border-top: 1px solid var(--border); padding-top: 20px; }
+.action { border: 1px solid var(--border); border-radius: 6px; padding: 12px; margin-bottom: 12px; }
+.action label { font-size: 12px; }
+.action input, .action textarea { margin-top: 6px; }
+.action button { font-size: 12px; padding: 5px 10px; }
+button.secondary { background: var(--surface); color: inherit; border-color: var(--border); }
+button.secondary:hover { border-color: var(--muted); }
 #status { min-height: 20px; font-size: 12px; color: var(--accent); }
 #status[data-error="true"] { color: #cf222e; }
 footer { border-top: 1px solid var(--border); padding-top: 18px; margin-top: 8px; font-size: 12px; }

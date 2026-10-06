@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Better Pull Request Button</title>
+    <link rel="icon" href="icons/pull-request.svg" type="image/svg+xml">
     <link rel="stylesheet" href="options.css">
     <script src="filter.js" defer></script>
     <script src="options.js" defer></script>
@@ -12,7 +13,7 @@
     <main>
       <header>
         <span class="eyebrow">YOUR GITHUB, YOUR DEFAULTS</span>
-        <h1>Better Pull Request Button</h1>
+        <h1><img src="icons/pull-request.svg" width="28" height="28" alt=""> Better Pull Request Button</h1>
         <p>Go straight to the pull requests you care about.</p>
       </header>
 
@@ -20,7 +21,7 @@
         <fieldset id="settings" disabled>
           <label class="toggle">
             <input id="enabled" type="checkbox">
-            Apply my filter to Pull requests links
+            Enable custom Pull requests filters
           </label>
 
           <label for="filter">Default filter</label>
@@ -36,7 +37,14 @@
             </ul>
           </details>
 
-          <button type="submit">Save filter</button>
+          <section aria-labelledby="actions-heading">
+            <h2 id="actions-heading">Dropdown filters</h2>
+            <p class="hint">Extra actions in the arrow menu beside Pull requests. The main link always uses your default filter.</p>
+            <div id="actions"></div>
+            <button id="add-action" class="secondary" type="button">+ Add filter</button>
+          </section>
+
+          <button type="submit">Save filters</button>
         </fieldset>
         <p id="status" role="status" aria-live="polite">Loading settings…</p>
       </form>

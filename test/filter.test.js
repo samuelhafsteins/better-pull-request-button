@@ -1,6 +1,6 @@
 const assert = require("node:assert/strict");
 const { test } = require("node:test");
-const { DEFAULT_SETTINGS, normalizeSettings, getFilteredUrl } = require("../extension/filter.js");
+const { DEFAULT_SETTINGS, normalizeSettings, getPullRequestsUrl, getFilteredUrl } = require("../extension/filter.js");
 
 const base = "https://github.com/octocat/hello-world";
 const settings = { enabled: true, filter: 'is:pr is:open label:"needs review" -is:draft' };
@@ -43,8 +43,26 @@ test("disabled or blank filters leave links alone", () => {
 
 test("normalizes missing settings and trims filters", () => {
   assert.deepEqual(normalizeSettings(), DEFAULT_SETTINGS);
-  assert.deepEqual(normalizeSettings({ filter: "  author:@me  ", enabled: false }), { filter: "author:@me", enabled: false });
+  assert.deepEqual(normalizeSettings({ filter: "  author:@me  ", enabled: false }), { filter: "author:@me", enabled: false, actions: [] });
   assert.deepEqual(normalizeSettings({ filter: 42 }), DEFAULT_SETTINGS);
+});
+
+test("migrates old settings and normalizes named dropdown filters", () => {
+  assert.deepEqual(normalizeSettings({ filter: "author:@me" }).actions, []);
+  assert.deepEqual(normalizeSettings({ actions: [
+    { label: "  Waiting on me  ", filter: " review-requested:@me " },
+    { label: "", filter: "is:open" }, { label: "Blank", filter: " " },
+    { label: "Broken", filter: 42 }, null,
+  ] }).actions, [{ label: "Waiting on me", filter: "review-requested:@me" }]);
+  assert.deepEqual(normalizeSettings({ actions: "invalid" }).actions, []);
+});
+
+test("recognizes dropdown destinations independently of the default filter", () => {
+  assert.equal(getPullRequestsUrl("/octocat/hello-world/pulls", base).pathname, "/octocat/hello-world/pulls");
+  assert.equal(getPullRequestsUrl("/pulls?q=is:closed", base), null);
+  const action = getFilteredUrl("/octocat/hello-world/pulls", base, { filter: "review-requested:@me" });
+  assert.equal(new URL(action).pathname, "/octocat/hello-world/pulls");
+  assert.equal(new URL(action).searchParams.get("q"), "review-requested:@me");
 });
 
 test("does not repeatedly append filters", () => {
